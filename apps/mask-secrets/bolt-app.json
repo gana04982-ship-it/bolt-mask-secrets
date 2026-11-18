@@ -1,0 +1,47 @@
+{
+  "schema_version": 1,
+  "id": "mask-secrets",
+  "title": "Mask secrets and tokens",
+  "role": "Developers sharing code, logs, or terminal snippets with AI models",
+  "saves": "Accidentally leaking production API keys, Bearer tokens, or database passwords to external LLMs",
+  "summary": "Type =mask-secrets and paste text, curl commands, or logs. Redacts OpenAI, AWS, GitHub, Stripe, and database credentials locally before you forward them.",
+  "author": {
+    "name": "Ganesh",
+    "link": "https://github.com/gana04982-ship-it"
+  },
+  "tier": 2,
+  "permissions": [
+    "copies_to_clipboard",
+    "reads_launcher_input"
+  ],
+  "tests": [
+    {
+      "kind": "transform",
+      "name": "redacts live authorization bearer token from copied curl command",
+      "target": "mask-secrets",
+      "input": "curl -H 'Authorization: Bearer eyJhbGciOiJIUzI1NiJ9.testToken' https://api.example.com/v1/user",
+      "expect": "curl -H 'Authorization: Bearer [REDACTED_TOKEN]' https://api.example.com/v1/user"
+    },
+    {
+      "kind": "transform",
+      "name": "redacts OpenAI project key and AWS access key from env dump",
+      "target": "mask-secrets",
+      "input": "OPENAI_API_KEY=sk-proj-abc1234567890abcdef1234567890\nAWS_ACCESS_KEY_ID=AKIAIOSFODNN7EXAMPLE",
+      "expect": "OPENAI_API_KEY=[OPENAI_KEY_REDACTED]\nAWS_ACCESS_KEY_ID=[AWS_KEY_REDACTED]"
+    },
+    {
+      "kind": "transform",
+      "name": "redacts database credentials without breaking hostname or port",
+      "target": "mask-secrets",
+      "input": "DATABASE_URL=postgres://app_user:p@ssword123@db.prod.internal:5432/core_db",
+      "expect": "DATABASE_URL=postgres://app_user:[REDACTED_PASSWORD]@db.prod.internal:5432/core_db"
+    },
+    {
+      "kind": "transform",
+      "name": "preserves ordinary developer code and variable names without false positives",
+      "target": "mask-secrets",
+      "input": "def ask_question(task_queue, skyline_view):\n  return True",
+      "expect": "def ask_question(task_queue, skyline_view):\n  return True"
+    }
+  ]
+}
